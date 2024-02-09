@@ -4,7 +4,7 @@ import 'package:mygrophikalapp/wrefresh.dart';
 import 'package:smartrefresh/smartrefresh.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'models/animemodel.dart';
+import 'models/animemodel2.dart';
 
 class AnimeListPage extends StatefulWidget {
   const AnimeListPage({super.key});
@@ -35,19 +35,65 @@ class _AnimeListPageState extends State<AnimeListPage> {
         child: Query(
             options: QueryOptions(
               document: gql('''
-              {
-                  Page {
-                    media {
-                      siteUrl
-                      title {
-                        english
-                        native
-                      }
-                      description
-                    }
-                  }
-                }
-
+              query  {
+  Page {
+    media {
+      siteUrl
+      title {
+        english
+        native
+      }
+      description
+    }
+  }
+  Media {
+    id
+    idMal
+    type
+    format
+    status
+    description
+    
+     
+    season
+    seasonYear
+    
+    episodes
+    duration
+    chapters
+    volumes
+    countryOfOrigin
+    isLicensed
+    source
+    hashtag
+    trailer {
+      thumbnail
+      site
+      id
+    }
+    updatedAt
+    coverImage {
+      large
+    }
+    bannerImage
+    genres
+    synonyms
+    averageScore
+    meanScore
+    popularity
+    isLocked
+    trending
+    favourites
+    isFavourite
+    isFavouriteBlocked
+    isAdult
+    siteUrl
+    autoCreateForumThread
+    isRecommendationBlocked
+    isReviewBlocked
+    modNotes
+  }
+}
               '''),
             ),
             builder: (result, {refetch, fetchMore}) {
@@ -70,42 +116,59 @@ class _AnimeListPageState extends State<AnimeListPage> {
               ).toList() ?? [];
               return ListView.separated(
                 itemBuilder: (_, index) {
-                  return ExpansionTile(
-                    title: Text('${medias[index].title?.english} - ${medias[index].title?.native}'),
-                    children: [
-                      Row(
-                        children: [
-                          Text("Website"),
-                          GestureDetector(
-                            onTap: () async {
-                              final url = medias[index].siteUrl!;
-                              if (await canLaunchUrl(Uri.parse(url))) { // Ensure the URL is non-null and correctly parsed
-                                await launchUrl(Uri.parse(url));
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Could not launch $url')),
-                                );
-                              }
-                            },
-                            child: Text(
-                              ' ${medias[index].siteUrl} ',
-                              style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 10,
+                  final media = medias[index]; // Assuming `medias` is a list of your GraphQL data objects.
+
+                  return Card( // Use Card for better UI structuring.
+                    margin: EdgeInsets.all(8.0),
+                    child: ExpansionTile(
+                      title: Text('${media.title?.english ?? ""} - ${media.title?.native ?? ""}'),
+                      subtitle: Text(media.format ?? ""),
+                      leading: media.coverImage?.large != null ? Image.network(media.coverImage!.large!) : null,
+                      children: <Widget>[
+                        ListTile(
+                          title: Text("Description"),
+                          subtitle: Text(media.description ?? "No description available."),
+                        ),
+                        ListTile(
+                          title: Text("Details"),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("Type: ${media.type ?? "N/A"}"),
+                              Text("Format: ${media.format ?? "N/A"}"),
+                              Text("Status: ${media.status ?? "N/A"}"),
+                              Text("Season: ${media.season ?? "N/A"}, ${media.seasonYear ?? ""}"),
+                              Text("Episodes: ${media.episodes ?? "N/A"}"),
+                              Text("Duration: ${media.duration ?? "N/A"} min"),
+                              // Add more fields as needed
+                            ],
+                          ),
+                        ),
+                        ListTile(
+                          title: Text("Genres"),
+                          subtitle: Text(media.genres?.join(', ') ?? "No genres available."),
+                        ),
+                        if (media.siteUrl != null)
+                          ListTile(
+                            title: Text("Website"),
+                            subtitle: InkWell(
+                              child: Text(media.siteUrl!, style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline)),
+                              onTap: () async {
+                                if (await canLaunchUrl(Uri.parse(media.siteUrl!))) {
+                                  await launchUrl(Uri.parse(media.siteUrl!));
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not launch ${media.siteUrl}')));
+                                }
+                              },
                             ),
                           ),
-                          SizedBox(width: 10),
-                        ],
-                      ),
-                      SizedBox(height: 12),
-                      Text(
-                        "${medias[index].description}",
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 10,
-                      ),
-                    ],
+                        // Consider adding more ListTiles for additional fields as needed.
+                      ],
+                    ),
                   );
                 },
+
+
 
                 separatorBuilder: (_, __) => SizedBox(
                   height: 12,
